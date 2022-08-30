@@ -62,7 +62,8 @@ func getSep(tags string) (tag string, split string) {
 		if split == "space" {
 			split = " "
 		}
+	} else {
+		tag = tags
 	}
-	tag = tags
 	return
 }
