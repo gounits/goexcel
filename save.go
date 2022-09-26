@@ -4,6 +4,7 @@
 package goexcel
 
 import (
+	"errors"
 	"fmt"
 	"github.com/xuri/excelize/v2"
 	"reflect"
@@ -16,7 +17,7 @@ import (
 func SaveExcel[T ~[]E, E IExcel](filepath string, data T) (err error) {
 	xlsx := excelize.NewFile()
 	if len(data) == 0 {
-		return fmt.Errorf("data is empty")
+		return errors.New("data is empty")
 	}
 	sheet := data[0].GetSheetName()
 	index := xlsx.NewSheet(sheet)
@@ -42,16 +43,23 @@ func SaveExcel[T ~[]E, E IExcel](filepath string, data T) (err error) {
 			// get split sep for tag
 			tag, split := getSep(tags)
 
-			column := 'A' + j
+			m := j % 26
+			n := j / 26
+			column := fmt.Sprintf("%c", 'A'+m)
+			if n >= 1 {
+				n--
+				column = fmt.Sprintf("%c%s", 'A'+n, column)
+			}
+
 			if i == 0 {
-				err = xlsx.SetCellValue(sheet, fmt.Sprintf("%c%d", column, i+1), tag)
+				err = xlsx.SetCellValue(sheet, fmt.Sprintf("%s%d", column, i+1), tag)
 			}
 			if split != "" {
 				vs := elem.Field(j).Interface().([]string)
 				value := strings.Join(vs, split)
-				err = xlsx.SetCellValue(sheet, fmt.Sprintf("%c%d", column, i+2), value)
+				err = xlsx.SetCellValue(sheet, fmt.Sprintf("%s%d", column, i+2), value)
 			} else {
-				err = xlsx.SetCellValue(sheet, fmt.Sprintf("%c%d", column, i+2), elem.Field(j).Interface())
+				err = xlsx.SetCellValue(sheet, fmt.Sprintf("%s%d", column, i+2), elem.Field(j).Interface())
 			}
 		}
 	}
