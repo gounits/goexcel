@@ -19,16 +19,17 @@ type Test struct {
 	High     int      `excel:"-"`
 }
 
-func (*Test) GetSheetName() string {
+func (Test) SheetName() string {
 	return "test"
 }
 
 func TestSaveExcel(t *testing.T) {
-	values := []*Test{{Name: "张三", Age: 17, Sex: "男", UserName: []string{"a", "b"}}, {Name: "李四", Age: 18, Sex: "女"}}
+	values := []Test{{Name: "张三", Age: 17, Sex: "男", UserName: []string{"a", "b"}}, {Name: "李四", Age: 18, Sex: "女"}}
 	err := goexcel.SaveExcel("test.xlsx", values)
 	assert.NoError(t, err)
 
-	data, _ := goexcel.LoadExcel[*Test]("test.xlsx")
+	var data []Test
+	_ = goexcel.LoadExcel("test.xlsx", &data)
 	assert.Equal(t, data, values)
 
 	_ = os.Remove("test.xlsx")
@@ -50,7 +51,7 @@ func ExampleSaveExcel() {
 
 	*/
 
-	values := []*Test{{Name: "张三", Age: 17, Sex: "男"}, {Name: "李四", Age: 18, Sex: "女"}}
+	values := []Test{{Name: "张三", Age: 17, Sex: "男"}, {Name: "李四", Age: 18, Sex: "女"}}
 	/***
 	name	age	sex
 	张三		17	男
@@ -86,9 +87,11 @@ func ExampleLoadExcel() {
 	李四		18	女
 	*/
 	_ = goexcel.SaveExcel("test.xlsx", values)
-	data, _ := goexcel.LoadExcel[*Test]("test.xlsx")
+
+	var data []Test
+	_ = goexcel.LoadExcel("test.xlsx", &data)
 	fmt.Println(data[0])
 	_ = os.Remove("test.xlsx")
 	// Output:
-	// &{张三 17 男 [] 0}
+	// {张三 17 男 [] 0}
 }

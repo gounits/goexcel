@@ -9,53 +9,49 @@ import (
 	"strings"
 )
 
-// LoadExcel loading Excel file
-//
-// must be implemented Excel interface.
-func LoadExcel[T IExcel](filePath string) (data []T, err error) {
-	// open Excel file
-	var file *excelize.File
+// LoadExcel 加载Excel文件
+func LoadExcel(filePath string, data any) (err error) {
+	var (
+		rows  [][]string
+		file  *excelize.File
+		title = map[string]int{}
+	)
+
 	if file, err = excelize.OpenFile(filePath); err != nil {
 		return
 	}
 
-	defer func() {
-		// Close the spreadsheet.
-		if err = file.Close(); err != nil {
-			return
-		}
-	}()
+	defer file.Close()
 
-	Object := reflect.TypeOf(data).Elem()
-	if Object.Kind() == reflect.Ptr {
-		Object = Object.Elem()
+	rv := reflect.ValueOf(data)
+	rv = reflect.Indirect(rv)
+
+	// 默认获取第一个sheet
+	sheet := file.GetSheetName(0)
+	{
+		one := reflect.New(rv.Type().Elem())
+		gst := one.MethodByName("SheetName")
+		if gst.IsValid() {
+			sheet = gst.Call(nil)[0].String()
+		}
 	}
 
-	// get sheet name from Excel interface
-	sheetName := reflect.New(Object).Interface().(T).GetSheetName()
-
-	rows, err := file.GetRows(sheetName)
-	if err != nil {
+	if rows, err = file.GetRows(sheet); err != nil {
 		return
 	}
 
-	data = make([]T, len(rows)-1)
+	if len(rows) == 0 {
+		err = EmptyError
+		return
+	}
 
-	// get title row
-	title := map[string]int{}
+	// 获取第一行的标题
 	for i, cell := range rows[0] {
 		title[cell] = i
 	}
 
-	// get data row
-	for index, row := range rows[1:] {
-		t := reflect.New(Object).Interface().(T)
-
-		value := reflect.ValueOf(&t)
-		if value.Kind() == reflect.Ptr {
-			value = value.Elem()
-		}
-
+	for _, row := range rows[1:] {
+		value := reflect.New(rv.Type().Elem())
 		value = reflect.Indirect(value)
 
 		for i := 0; i < value.NumField(); i++ {
@@ -65,7 +61,6 @@ func LoadExcel[T IExcel](filePath string) (data []T, err error) {
 				continue
 			}
 
-			// get split sep for tag
 			tag, split := getSep(tags)
 
 			if j, ok := title[tag]; ok {
@@ -86,7 +81,6 @@ func LoadExcel[T IExcel](filePath string) (data []T, err error) {
 					}
 				} else {
 					vs := strings.Split(row[j], split)
-
 					v.Set(reflect.MakeSlice(v.Type(), len(vs), len(vs)))
 					for k, v1 := range vs {
 						v.Index(k).SetString(strings.TrimSpace(v1))
@@ -95,7 +89,7 @@ func LoadExcel[T IExcel](filePath string) (data []T, err error) {
 			}
 		}
 
-		data[index] = t
+		rv.Set(reflect.Append(rv, value))
 	}
 	return
 }

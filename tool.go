@@ -10,13 +10,17 @@ import (
 	"strings"
 )
 
-// IExcel loading Excel must be implementation interface.
-type IExcel interface {
-	// GetSheetName return need loading sheet name in the Excel.
-	GetSheetName() string
+var (
+	EmptyError   = errors.New("data is empty")
+	NoSliceError = errors.New("data is not slice")
+)
+
+// ISheet 保存到Excel中的sheet名称
+type ISheet interface {
+	SheetName() string
 }
 
-// cp copy value from string to value.
+// 将字符串转换成对应的类型
 func cp(v1 *reflect.Value, b string) error {
 	switch v1.Kind() {
 	case reflect.Bool:
@@ -51,14 +55,14 @@ func cp(v1 *reflect.Value, b string) error {
 	return nil
 }
 
-// get split sep for tag
+// 根据tag获取分隔符
 func getSep(tags string) (tag string, split string) {
 	if strings.Contains(tags, ";") {
 		sep := strings.SplitN(tags, ";", 2)
 		tag = sep[0]
 		split = strings.TrimSpace(sep[1])
 
-		// get split sep for tag,if tag is space,use split " "
+		// 如果是空格分割，需要用 space 替换
 		if split == "space" {
 			split = " "
 		}

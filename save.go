@@ -4,29 +4,54 @@
 package goexcel
 
 import (
-	"errors"
 	"fmt"
 	"github.com/xuri/excelize/v2"
 	"reflect"
 	"strings"
 )
 
-// SaveExcel save data to excel.
-//
-// must be implemented Excel interface.
-func SaveExcel[T ~[]E, E IExcel](filepath string, data T) (err error) {
+// SaveExcel 保存到Excel文件中
+// filepath: 文件路径
+// data: 保存的数据
+func SaveExcel(filepath string, data any) (err error) {
 	xlsx := excelize.NewFile()
-	if len(data) == 0 {
-		return errors.New("data is empty")
+
+	rv := reflect.ValueOf(data)
+
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
 	}
-	sheet := data[0].GetSheetName()
-	index := xlsx.NewSheet(sheet)
 
-	s := reflect.ValueOf(data)
+	// 如果不是切片类型
+	if rv.Type().Kind() != reflect.Slice {
+		err = NoSliceError
+		return
+	}
 
-	for i := 0; i < s.Len(); i++ {
-		elem := s.Index(i)
-		// drop ptr
+	// 获取切片的长度
+	length := rv.Len()
+	if length == 0 || rv.IsNil() || rv.IsZero() {
+		return EmptyError
+	}
+
+	// 设置默认的sheet名称
+	sheet := "Sheet1"
+	{
+		// 获取一个元素的类型
+		gst := rv.Index(0).MethodByName("SheetName")
+		if gst.IsValid() {
+			sheet = gst.Call(nil)[0].String()
+		}
+	}
+
+	var index int
+	if index, err = xlsx.NewSheet(sheet); err != nil {
+		return
+	}
+
+	for i := 0; i < length; i++ {
+		elem := rv.Index(i)
+		// 如果是指针类型
 		if elem.Kind() == reflect.Ptr {
 			elem = elem.Elem()
 		}
@@ -64,7 +89,9 @@ func SaveExcel[T ~[]E, E IExcel](filepath string, data T) (err error) {
 		}
 	}
 	xlsx.SetActiveSheet(index)
-	xlsx.DeleteSheet("Sheet1")
+	if sheet != "Sheet1" {
+		_ = xlsx.DeleteSheet("Sheet1")
+	}
 	err = xlsx.SaveAs(filepath)
 	return
 }
