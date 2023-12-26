@@ -17,6 +17,12 @@ func LoadExcel(filePath string, data any) (err error) {
 		title = map[string]int{}
 	)
 
+	t := reflect.TypeOf(data)
+	if t.Kind() != reflect.Ptr {
+		err = NotPtrError
+		return
+	}
+
 	if file, err = excelize.OpenFile(filePath); err != nil {
 		return
 	}

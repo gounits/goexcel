@@ -13,6 +13,7 @@ import (
 var (
 	EmptyError   = errors.New("data is empty")
 	NoSliceError = errors.New("data is not slice")
+	NotPtrError  = errors.New("data is not ptr")
 )
 
 // ISheet 保存到Excel中的sheet名称

@@ -45,7 +45,7 @@ func ExampleSaveExcel() {
 		High     int      `excel:"-"`
 	}
 
-	func (Test) GetSheetName() string {
+	func (Test) SheetName() string {
 		return "test"
 	}
 
@@ -74,7 +74,7 @@ func ExampleLoadExcel() {
 		High     int      `excel:"-"`
 	}
 
-	func (Test) GetSheetName() string {
+	func (Test) SheetName() string {
 		return "test"
 	}
 

@@ -13,7 +13,9 @@ Excel reading and writing based on Go structs
 ```go
 package main
 
-import "github.com/gounits/goexcel"
+import (
+	"github.com/gounits/goexcel"
+)
 
 type Test struct {
 	Name     string   `excel:"name"`
@@ -23,12 +25,12 @@ type Test struct {
 	High     int      `excel:"-"`
 }
 
-func (*Test) GetSheetName() string {
+func (*Test) SheetName() string {
 	return "test"
 }
 
 func main() {
-	values := []*Test{{Name: "张三", Age: 17, Sex: "男"}, {Name: "李四", Age: 18, Sex: "女"}}
+	values := []Test{{Name: "张三", Age: 17, Sex: "男"}, {Name: "李四", Age: 18, Sex: "女"}}
 	if err := goexcel.SaveExcel("test.xlsx", values); err != nil {
 		panic(err)
 	}
@@ -53,16 +55,15 @@ type Test struct {
 	High     int      `excel:"-"`
 }
 
-func (*Test) GetSheetName() string {
+func (*Test) SheetName() string {
 	return "test"
 }
 
 func main() {
-	data, err := goexcel.LoadExcel[*Test]("test.xlsx")
-	if err != nil {
+	var data []Test
+	if err := goexcel.LoadExcel("test.xlsx", &data); err != nil {
 		panic(err)
 	}
 	fmt.Println(data)
 }
-
 ```
