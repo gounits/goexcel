@@ -68,6 +68,8 @@ func To[T TypeConvert](data string) (value T, err error) {
 		flag, err = strconv.ParseBool(data)
 	case reflect.String:
 		flag = data
+	default:
+		flag = data
 	}
 
 	if err == nil {

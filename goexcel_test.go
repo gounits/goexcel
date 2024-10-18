@@ -28,9 +28,22 @@ func TestSaveExcel(t *testing.T) {
 	err := goexcel.SaveExcel("test.xlsx", values)
 	assert.NoError(t, err)
 
-	var data []Test
-	_ = goexcel.LoadExcel("test.xlsx", &data)
-	assert.Equal(t, data, values)
+	var (
+		test []Test
+		bind *goexcel.Bind
+	)
+
+	if bind, err = goexcel.New("test.xlsx").WithSheetName("test").Load(); err != nil {
+		assert.NoError(t, err)
+		return
+	}
+
+	if err = bind.BindStruct(&test); err != nil {
+		assert.NoError(t, err)
+		return
+	}
+
+	assert.Equal(t, test, values)
 
 	_ = os.Remove("test.xlsx")
 }
@@ -51,7 +64,7 @@ func ExampleSaveExcel() {
 
 	*/
 
-	values := []Test{{Name: "张三", Age: 17, Sex: "男"}, {Name: "李四", Age: 18, Sex: "女"}}
+	values := []Test{{Name: "张三", Age: 17, Sex: "男"}, {Name: "李四", Age: 18, Sex: "女", UserName: []string{"张伟", "廖小沫"}}}
 	/***
 	name	age	sex
 	张三		17	男
@@ -64,7 +77,7 @@ func ExampleSaveExcel() {
 	// <nil>
 }
 
-func ExampleLoadExcel() {
+func ExampleExcel_Load() {
 	/***
 	type Test struct {
 		Name     string   `excel:"name"`
@@ -86,12 +99,27 @@ func ExampleLoadExcel() {
 	张三		17	男
 	李四		18	女
 	*/
-	_ = goexcel.SaveExcel("test.xlsx", values)
 
-	var data []Test
-	_ = goexcel.LoadExcel("test.xlsx", &data)
-	fmt.Println(data[0])
+	var (
+		test []Test
+		bind *goexcel.Bind
+		err  error
+	)
+
+	if err = goexcel.SaveExcel("test.xlsx", values); err != nil {
+		panic(err)
+	}
+
+	if bind, err = goexcel.New("test.xlsx").Load(); err != nil {
+		panic(err)
+	}
+
+	if err = bind.BindStruct(&test); err != nil {
+		panic(err)
+	}
+
+	fmt.Println(test)
 	_ = os.Remove("test.xlsx")
 	// Output:
-	// {张三 17 男 [] 0}
+	// [{张三 17 男 [] 0} {李四 18 女 [] 0}]
 }

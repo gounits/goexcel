@@ -4,59 +4,50 @@
 package goexcel
 
 import (
-	"github.com/xuri/excelize/v2"
+	"github.com/gounits/goexcel/internal"
 	"reflect"
 	"strings"
 )
 
-// LoadExcel 加载Excel文件
-func LoadExcel(filePath string, data any) (err error) {
+type Bind struct {
+	Title  []string
+	Values [][]string
+}
+
+func newBind(value [][]string) *Bind {
+	return &Bind{Title: value[0], Values: value[1:]}
+}
+
+func (b *Bind) value(data any) (rv reflect.Value, err error) {
+	// 必须是指针类型
+	if t := reflect.TypeOf(data); t.Kind() != reflect.Ptr {
+		err = internal.NotPtrError
+		return
+	}
+
+	// 获取指针类型的数据类型
+	rv = reflect.ValueOf(data)
+	rv = reflect.Indirect(rv)
+	return
+}
+
+func (b *Bind) BindStruct(data any) (err error) {
 	var (
-		rows  [][]string
-		file  *excelize.File
-		title = map[string]int{}
+		rv    reflect.Value
+		title = make(map[string]int)
 	)
 
-	t := reflect.TypeOf(data)
-	if t.Kind() != reflect.Ptr {
-		err = NotPtrError
-		return
-	}
-
-	if file, err = excelize.OpenFile(filePath); err != nil {
-		return
-	}
-
-	defer file.Close()
-
-	rv := reflect.ValueOf(data)
-	rv = reflect.Indirect(rv)
-
-	// 默认获取第一个sheet
-	sheet := file.GetSheetName(0)
-	{
-		one := reflect.New(rv.Type().Elem())
-		gst := one.MethodByName("SheetName")
-		if gst.IsValid() {
-			sheet = gst.Call(nil)[0].String()
-		}
-	}
-
-	if rows, err = file.GetRows(sheet); err != nil {
-		return
-	}
-
-	if len(rows) == 0 {
-		err = EmptyError
+	// 获取反射类型
+	if rv, err = b.value(data); err != nil {
 		return
 	}
 
 	// 获取第一行的标题
-	for i, cell := range rows[0] {
+	for i, cell := range b.Title {
 		title[cell] = i
 	}
 
-	for _, row := range rows[1:] {
+	for _, row := range b.Values {
 		value := reflect.New(rv.Type().Elem())
 		value = reflect.Indirect(value)
 
@@ -67,7 +58,7 @@ func LoadExcel(filePath string, data any) (err error) {
 				continue
 			}
 
-			tag, split := getSep(tags)
+			tag, split := internal.GetSep(tags)
 
 			if j, ok := title[tag]; ok {
 				v := value.Field(i)
@@ -82,7 +73,7 @@ func LoadExcel(filePath string, data any) (err error) {
 				}
 
 				if split == "" {
-					if err = cp(&v, d); err != nil {
+					if err = internal.Copy(&v, d); err != nil {
 						return
 					}
 				} else {
@@ -94,7 +85,6 @@ func LoadExcel(filePath string, data any) (err error) {
 				}
 			}
 		}
-
 		rv.Set(reflect.Append(rv, value))
 	}
 	return

@@ -5,6 +5,7 @@ package goexcel
 
 import (
 	"fmt"
+	"github.com/gounits/goexcel/internal"
 	"github.com/xuri/excelize/v2"
 	"reflect"
 	"strings"
@@ -24,14 +25,14 @@ func SaveExcel(filepath string, data any) (err error) {
 
 	// 如果不是切片类型
 	if rv.Type().Kind() != reflect.Slice {
-		err = NoSliceError
+		err = internal.NoSliceError
 		return
 	}
 
 	// 获取切片的长度
 	length := rv.Len()
 	if length == 0 || rv.IsNil() || rv.IsZero() {
-		return EmptyError
+		return internal.EmptyError
 	}
 
 	// 设置默认的sheet名称
@@ -66,7 +67,7 @@ func SaveExcel(filepath string, data any) (err error) {
 			}
 
 			// get split sep for tag
-			tag, split := getSep(tags)
+			tag, split := internal.GetSep(tags)
 
 			m := j % 26
 			n := j / 26
