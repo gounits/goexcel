@@ -35,7 +35,7 @@ func TestSaveExcel(t *testing.T) {
 	)
 
 	excel := goexcel.New("test.xlsx")
-	excel.WithXSLXSheetName("test").WithType(parse.XLSX)
+	excel.WithXLSXSheetName("test").WithType(parse.XLSX)
 
 	if bind, err = excel.Load(); err != nil {
 		assert.NoError(t, err)
