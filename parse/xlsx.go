@@ -8,13 +8,17 @@ import (
 	"log"
 )
 
-type XLSX struct {
-	Filepath  string
+type XLSXParams struct {
 	SheetName string
 	Index     int
 }
 
-func (X *XLSX) Load() (rows [][]string, err error) {
+type xlsx struct {
+	Filepath string
+	XLSXParams
+}
+
+func (X *xlsx) Load() (rows [][]string, err error) {
 	var (
 		file  *excelize.File
 		sheet = X.SheetName

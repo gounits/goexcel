@@ -3,22 +3,26 @@
 
 package parse
 
-import "github.com/extrame/xls"
+import XLS_ "github.com/extrame/xls"
 
-type XLS struct {
+type XLSParams struct {
 	SheetName string
-	Filepath  string
 	Index     int
 }
 
-func (x *XLS) Load() (res [][]string, err error) {
-	var xlsFile *xls.WorkBook
+type xls struct {
+	Filepath string
+	XLSParams
+}
 
-	if xlsFile, err = xls.Open(x.Filepath, "utf-8"); err != nil {
+func (x *xls) Load() (res [][]string, err error) {
+	var xlsFile *XLS_.WorkBook
+
+	if xlsFile, err = XLS_.Open(x.Filepath, "utf-8"); err != nil {
 		return
 	}
 
-	var sheet *xls.WorkSheet
+	var sheet *XLS_.WorkSheet
 
 	sheet = xlsFile.GetSheet(x.Index)
 

@@ -6,6 +6,7 @@ package goexcel_test
 import (
 	"fmt"
 	"github.com/gounits/goexcel"
+	"github.com/gounits/goexcel/parse"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -33,7 +34,10 @@ func TestSaveExcel(t *testing.T) {
 		bind *goexcel.Bind
 	)
 
-	if bind, err = goexcel.New("test.xlsx").WithSheetName("test").Load(); err != nil {
+	excel := goexcel.New("test.xlsx")
+	excel.WithXSLXSheetName("test").WithType(parse.XLSX)
+
+	if bind, err = excel.Load(); err != nil {
 		assert.NoError(t, err)
 		return
 	}

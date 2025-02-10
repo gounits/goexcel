@@ -4,7 +4,7 @@
 package goexcel
 
 import (
-	"github.com/gounits/goexcel/internal"
+	"github.com/gounits/goexcel/tools"
 	"reflect"
 	"strings"
 )
@@ -21,7 +21,7 @@ func newBind(value [][]string) *Bind {
 func (b *Bind) value(data any) (rv reflect.Value, err error) {
 	// 必须是指针类型
 	if t := reflect.TypeOf(data); t.Kind() != reflect.Ptr {
-		err = internal.NotPtrError
+		err = tools.NotPtrError
 		return
 	}
 
@@ -58,7 +58,7 @@ func (b *Bind) BindStruct(data any) (err error) {
 				continue
 			}
 
-			tag, split := internal.GetSep(tags)
+			tag, split := tools.GetSep(tags)
 
 			if j, ok := title[tag]; ok {
 				v := value.Field(i)
@@ -73,7 +73,7 @@ func (b *Bind) BindStruct(data any) (err error) {
 				}
 
 				if split == "" {
-					if err = internal.Copy(&v, d); err != nil {
+					if err = tools.Copy(&v, d); err != nil {
 						return
 					}
 				} else {
