@@ -3,7 +3,9 @@
 
 package parse
 
-import "github.com/gounits/goexcel/tools"
+import (
+	"github.com/gounits/goexcel/tools"
+)
 
 // IParse 解析数据的接口
 type IParse interface {
@@ -17,7 +19,6 @@ const (
 	XLS
 	CSV
 	TSV
-	TEXT
 	Default
 )
 
@@ -30,11 +31,10 @@ func (f FileType) Reader(param Params) (result IParse, err error) {
 	case XLS:
 		result = f.xls(param.Filepath, param.XlsParams)
 	case CSV:
-		result = f.csv(param.Filepath)
+		result = f.csv(param.Filepath, param.CSVParams)
 	case TSV:
-		result = f.tsv(param.Filepath)
-	case TEXT:
-		result = f.text(param.Filepath)
+		param.CSVParams.Sep = '\t'
+		result = f.csv(param.Filepath, param.CSVParams)
 	default:
 		err = tools.TypeError
 	}
@@ -49,14 +49,6 @@ func (f FileType) xls(filepath string, params XLSParams) IParse {
 	return &xls{filepath, params}
 }
 
-func (f FileType) csv(filepath string) IParse {
-	return nil
-}
-
-func (f FileType) tsv(filepath string) IParse {
-	return nil
-}
-
-func (f FileType) text(filepath string) IParse {
-	return nil
+func (f FileType) csv(filepath string, params CSVParams) IParse {
+	return &csv{filepath, params}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/gounits/goexcel"
 	"github.com/gounits/goexcel/parse"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/text/encoding/unicode"
 	"os"
 	"testing"
 )
@@ -124,6 +125,28 @@ func ExampleExcel_Load() {
 
 	fmt.Println(test)
 	_ = os.Remove("test.xlsx")
+	// Output:
+	// [{张三 17 男 [] 0} {李四 18 女 [] 0}]
+}
+
+func ExampleCSV_Load() {
+	var (
+		test []Test
+		bind *goexcel.Bind
+		err  error
+	)
+
+	excel := goexcel.New("test.csv")
+	excel.WithCSVFormat(unicode.UTF8BOM)
+	if bind, err = excel.Load(); err != nil {
+		panic(err)
+	}
+
+	if err = bind.BindStruct(&test); err != nil {
+		panic(err)
+	}
+
+	fmt.Println(test)
 	// Output:
 	// [{张三 17 男 [] 0} {李四 18 女 [] 0}]
 }

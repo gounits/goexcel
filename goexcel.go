@@ -26,8 +26,6 @@ func New(filepath string) *Excel {
 		e.Type = parse.CSV
 	case ".tsv":
 		e.Type = parse.TSV
-	case ".text":
-		e.Type = parse.TEXT
 	default:
 		e.Type = parse.Default
 	}

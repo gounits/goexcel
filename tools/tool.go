@@ -15,6 +15,7 @@ var (
 	NoSliceError = errors.New("数据不是切片类型")
 	NotPtrError  = errors.New("数据必须是指针类型")
 	TypeError    = errors.New("不支持该文件类型")
+	UTF8Error    = errors.New("文件不是UTF8格式，请转为UTF8")
 )
 
 // ISheet 保存到Excel中的sheet名称
