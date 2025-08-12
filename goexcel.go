@@ -1,60 +1,36 @@
-// @Time  : 2022/7/3 9:11
-// @Email: jtyoui@qq.com
-
 package goexcel
 
 import (
+	"reflect"
+
 	"github.com/gounits/goexcel/parse"
-	"github.com/gounits/goexcel/tools"
-	"path"
 )
 
-type Excel struct {
-	parse.Params
-}
-
-func New(filepath string) *Excel {
-	e := &Excel{}
-	e.Filepath = filepath
-	// 默认不指定格式，默认启动是文件后缀名自动推导
-	switch path.Ext(filepath) {
-	case ".xlsx":
-		e.Type = parse.XLSX
-	case ".xls":
-		e.Type = parse.XLS
-	case ".csv":
-		e.Type = parse.CSV
-	case ".tsv":
-		e.Type = parse.TSV
-	default:
-		e.Type = parse.Default
-	}
-	return e
-}
-
-func (e *Excel) Param() *parse.Params {
-	return &e.Params
-}
-
-func (e *Excel) Load() (bind *Bind, err error) {
+// Load 加载文件数据，绑定到结构体上
+func Load[T any, P parse.IParse](filepath string, config func(parse P)) (t []T, err error) {
 	var (
-		rows   [][]string
-		reader parse.IParse
+		rows  [][]string
+		excel P
 	)
 
-	if reader, err = e.Type.Reader(e.Params); err != nil {
+	// 初始化对象
+	if reflect.TypeOf(excel).Kind() == reflect.Ptr {
+		typ := reflect.TypeOf(excel).Elem()
+		value := reflect.New(typ)
+		excel = value.Interface().(P)
+	}
+
+	// 设置自定义参数
+	if config != nil {
+		config(excel)
+	}
+
+	// 读取文件返回数据
+	if rows, err = excel.Load(filepath); err != nil {
 		return
 	}
 
-	if rows, err = reader.Load(); err != nil {
-		return
-	}
-
-	if len(rows) == 0 || len(rows[0]) == 0 {
-		err = tools.EmptyError
-		return
-	}
-
-	bind = newBind(rows)
+	// 绑定到结构体上
+	t, err = convertToStructs[T](rows)
 	return
 }

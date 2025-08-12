@@ -3,37 +3,45 @@
 
 package parse
 
-import XLS_ "github.com/extrame/xls"
+import (
+	"errors"
 
-type XLSParams struct {
+	"github.com/extrame/xls"
+)
+
+type XLS struct {
 	SheetName string
 	Index     int
 }
 
-type xls struct {
-	Filepath string
-	XLSParams
-}
+func (x *XLS) Load(path string) (res [][]string, err error) {
+	var xlsFile *xls.WorkBook
 
-func (x *xls) Load() (res [][]string, err error) {
-	var xlsFile *XLS_.WorkBook
-
-	if xlsFile, err = XLS_.Open(x.Filepath, "utf-8"); err != nil {
+	if xlsFile, err = xls.Open(path, "utf-8"); err != nil {
 		return
 	}
 
-	var sheet *XLS_.WorkSheet
+	var sheet *xls.WorkSheet
 
 	sheet = xlsFile.GetSheet(x.Index)
 
 	if x.SheetName != "" {
 		for i := 0; i < xlsFile.NumSheets(); i++ {
 			temp := xlsFile.GetSheet(i)
+			if temp == nil {
+				err = errors.New("获取XLS Sheet 名字失败")
+				return
+			}
 			if temp.Name == x.SheetName {
 				sheet = temp
 				break
 			}
 		}
+	}
+
+	if sheet == nil {
+		err = errors.New("获取XLS Sheet 为空")
+		return
 	}
 
 	if sheet.MaxRow != 0 {
