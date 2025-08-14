@@ -36,7 +36,19 @@ func convertToStructs[T any](data [][]string) (t []T, err error) {
 		var item T
 
 		// 获取结构体的反射值
-		val := reflect.ValueOf(&item).Elem()
+		val := reflect.ValueOf(item)
+
+		if val.Kind() == reflect.Struct {
+			val = reflect.ValueOf(&item).Elem()
+		} else {
+			// 如果泛型是指针类型
+			if val.Kind() == reflect.Ptr {
+				typ := val.Type().Elem()
+				val = reflect.New(typ)
+				item = val.Interface().(T)
+				val = reflect.ValueOf(item).Elem()
+			}
+		}
 
 		// 获取结构体的类型
 		typ := val.Type()
@@ -49,7 +61,6 @@ func convertToStructs[T any](data [][]string) (t []T, err error) {
 			tag := field.Tag.Get("excel")
 
 			if pos, ok := header2idx[tag]; ok {
-				// 找到匹配的字段，进行类型转换并赋值
 				if err = setFieldValue(val.Field(j), row[pos]); err != nil {
 					err = fmt.Errorf("第%d行第%d列赋值错误: %v", idx+1, pos+1, err)
 					return
