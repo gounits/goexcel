@@ -12,7 +12,7 @@ type XLSX struct {
 	Index     int
 }
 
-func (x *XLSX) Load(path string) (rows [][]string, err error) {
+func (x XLSX) Load(path string) (rows [][]string, err error) {
 	var (
 		file  *excelize.File
 		sheet = x.SheetName

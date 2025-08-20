@@ -13,7 +13,7 @@ type Test struct {
 	Sex  string `excel:"sex"`
 }
 
-func (t Test) SheetName() string {
+func (t *Test) SheetName() string {
 	return "test"
 }
 

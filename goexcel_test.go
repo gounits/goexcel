@@ -20,7 +20,7 @@ func (t *Test) SheetName() string {
 }
 
 func TestLoad(t *testing.T) {
-	test, err := goexcel.Load[Test, *parse.XLSX]("data/test.xlsx", nil)
+	test, err := goexcel.Load[Test, parse.XLSX]("data/test.xlsx", nil)
 	if err != nil {
 		t.Error(err)
 		return

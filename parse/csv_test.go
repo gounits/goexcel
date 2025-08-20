@@ -9,7 +9,7 @@ import (
 
 func TestCSV(t *testing.T) {
 	csv := parse.CSV{Comment: ','}
-	load, err := csv.Load("../../data/test.csv")
+	load, err := csv.Load("../data/test.csv")
 	if err != nil {
 		t.Error(err)
 	}

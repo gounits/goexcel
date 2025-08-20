@@ -9,7 +9,7 @@ type CSV struct {
 	Comment rune
 }
 
-func (c *CSV) Load(path string) (rows [][]string, err error) {
+func (c CSV) Load(path string) (rows [][]string, err error) {
 	var file *os.File
 
 	if file, err = os.Open(path); err != nil {

@@ -14,7 +14,7 @@ type XLS struct {
 	Index     int
 }
 
-func (x *XLS) Load(path string) (res [][]string, err error) {
+func (x XLS) Load(path string) (res [][]string, err error) {
 	var xlsFile *xls.WorkBook
 
 	if xlsFile, err = xls.Open(path, "utf-8"); err != nil {

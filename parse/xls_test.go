@@ -9,7 +9,7 @@ import (
 
 func TestXLS(t *testing.T) {
 	xls := parse.XLS{}
-	load, err := xls.Load("../../data/test.xls")
+	load, err := xls.Load("../data/test.xls")
 	if err != nil {
 		t.Error(err)
 	}
