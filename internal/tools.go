@@ -1,4 +1,4 @@
-package goexcel
+package internal
 
 import (
 	"fmt"
@@ -6,8 +6,35 @@ import (
 	"strconv"
 )
 
-// 将二维字符串切片转换为指定结构体类型的切片
-func convertToStructs[T any](data [][]string) (t []T, err error) {
+func newObject(object any) reflect.Value {
+	rv := reflect.ValueOf(object)
+
+	if rv.Kind() == reflect.Ptr && rv.IsNil() {
+		typ := reflect.TypeOf(object).Elem()
+		rv = reflect.New(typ)
+	} else if rv.Kind() == reflect.Struct {
+		typ := reflect.TypeOf(object)
+		rv = reflect.New(typ)
+	} else if rv.Elem().Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+	return rv
+}
+
+// SheetName 输入一个对象object判断是否实现了 ISheetName 接口，如果实现了获取结果
+func SheetName(object any) (name string, err error) {
+	rv := newObject(object)
+	method := rv.MethodByName("SheetName")
+	if method.IsValid() {
+		name = method.Call(nil)[0].String()
+	}
+	return
+}
+
+// ConvertToStructs 将二维字符串切片转换为指定结构体类型的切片
+func ConvertToStructs[T any](data [][]string) (t []T, err error) {
+	var item T
+
 	if len(data) < 2 {
 		err = fmt.Errorf("数据至少需要包含表头和一行数据")
 		return
@@ -26,32 +53,24 @@ func convertToStructs[T any](data [][]string) (t []T, err error) {
 	// 创建结果切片
 	t = make([]T, 0, len(rows))
 
+	// 初始化泛型对象并获取类型
+	val := newObject(item).Elem()
+	typ := val.Type()
+
+	// 判断泛型传入的是指针吗？
+	ptr := reflect.ValueOf(item).Kind() == reflect.Ptr
+
 	// 遍历每一行数据
 	for idx, row := range rows {
 		if len(row) != len(headers) {
 			err = fmt.Errorf("第%d行数据列数与表头不匹配", idx+1)
 			return
 		}
-		// 创建一个新的结构体实例
-		var item T
 
-		// 获取结构体的反射值
-		val := reflect.ValueOf(item)
-
-		if val.Kind() == reflect.Struct {
-			val = reflect.ValueOf(&item).Elem()
-		} else {
-			// 如果泛型是指针类型
-			if val.Kind() == reflect.Ptr {
-				typ := val.Type().Elem()
-				val = reflect.New(typ)
-				item = val.Interface().(T)
-				val = reflect.ValueOf(item).Elem()
-			}
+		if val = reflect.New(typ); ptr {
+			item = val.Interface().(T)
 		}
-
-		// 获取结构体的类型
-		typ := val.Type()
+		val = val.Elem()
 
 		// 查找结构体中与表头匹配的字段
 		for j := 0; j < typ.NumField(); j++ {
@@ -66,6 +85,10 @@ func convertToStructs[T any](data [][]string) (t []T, err error) {
 					return
 				}
 			}
+		}
+
+		if !ptr {
+			item = val.Interface().(T)
 		}
 
 		t = append(t, item)

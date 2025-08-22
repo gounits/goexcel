@@ -1,10 +1,10 @@
-package parse_test
+package internal_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/gounits/goexcel/parse"
+	"github.com/gounits/goexcel/internal"
 )
 
 type Test struct {
@@ -19,7 +19,7 @@ func (t *Test) SheetName() string {
 
 func TestSheetName(t *testing.T) {
 	t1 := Test{}
-	n1, err := parse.SheetName(t1)
+	n1, err := internal.SheetName(t1)
 	if err != nil {
 		t.Error(err)
 		return
@@ -27,7 +27,7 @@ func TestSheetName(t *testing.T) {
 
 	fmt.Println(1, n1)
 
-	n2, err := parse.SheetName(&t1)
+	n2, err := internal.SheetName(&t1)
 	if err != nil {
 		t.Error(err)
 		return
@@ -35,7 +35,7 @@ func TestSheetName(t *testing.T) {
 	fmt.Println(2, n2)
 
 	t2 := &Test{}
-	n3, err := parse.SheetName(&t2)
+	n3, err := internal.SheetName(&t2)
 	if err != nil {
 		t.Error(err)
 		return
@@ -43,7 +43,7 @@ func TestSheetName(t *testing.T) {
 	fmt.Println(3, n3)
 
 	var t3 Test
-	n4, err := parse.SheetName(t3)
+	n4, err := internal.SheetName(t3)
 	if err != nil {
 		t.Error(err)
 		return
@@ -51,7 +51,7 @@ func TestSheetName(t *testing.T) {
 	fmt.Println(4, n4)
 
 	var t4 *Test
-	n5, err := parse.SheetName(t4)
+	n5, err := internal.SheetName(t4)
 	if err != nil {
 		t.Error(err)
 		return

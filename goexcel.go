@@ -4,6 +4,7 @@ import (
 	"errors"
 	"reflect"
 
+	"github.com/gounits/goexcel/internal"
 	"github.com/gounits/goexcel/parse"
 	"github.com/xuri/excelize/v2"
 )
@@ -18,7 +19,7 @@ func Load[T any, P parse.IParse](filepath string, config func(parse P)) (t []T, 
 	)
 
 	// 判断泛型有没有实现ISheetName接口
-	if sheetName, err = parse.SheetName(t1); err != nil {
+	if sheetName, err = internal.SheetName(t1); err != nil {
 		return
 	}
 
@@ -46,7 +47,7 @@ func Load[T any, P parse.IParse](filepath string, config func(parse P)) (t []T, 
 	}
 
 	// 绑定到结构体上
-	t, err = convertToStructs[T](rows)
+	t, err = internal.ConvertToStructs[T](rows)
 	return
 }
 
@@ -86,7 +87,7 @@ func Save[T any](filepath string, data []T) (err error) {
 	}
 
 	// 设置默认的sheet名称
-	if sheet, err = parse.SheetName(t); err != nil {
+	if sheet, err = internal.SheetName(t); err != nil {
 		return
 	}
 
