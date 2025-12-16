@@ -18,7 +18,7 @@ func Load[T any, P parse.IParse](filepath string, config func(parse P)) (t []T, 
 		excel     P
 	)
 
-	// 判断泛型有没有实现ISheetName接口
+	// 判断泛型有没有实现 ISheetName 接口
 	if sheetName, err = internal.SheetName(t1); err != nil {
 		return
 	}
@@ -60,6 +60,8 @@ func Save[T any](filepath string, data []T) (err error) {
 
 	xlsx := excelize.NewFile()
 
+	defer xlsx.Close()
+
 	rv := reflect.ValueOf(data)
 
 	if rv.Kind() == reflect.Ptr {
@@ -86,7 +88,7 @@ func Save[T any](filepath string, data []T) (err error) {
 		}
 	}
 
-	// 设置默认的sheet名称
+	// 设置默认的 sheet 名称
 	if sheet, err = internal.SheetName(t); err != nil {
 		return
 	}

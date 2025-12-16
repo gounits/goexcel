@@ -1,31 +1,43 @@
 package internal
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
-	"strconv"
 )
 
-func newObject(object any) reflect.Value {
-	rv := reflect.ValueOf(object)
+func newObject(object any) (rv reflect.Value, err error) {
+	rv = reflect.ValueOf(object)
 
-	if rv.Kind() == reflect.Ptr && rv.IsNil() {
-		typ := reflect.TypeOf(object).Elem()
-		rv = reflect.New(typ)
-	} else if rv.Kind() == reflect.Struct {
+	switch rv.Kind() {
+	case reflect.Ptr:
+		if rv.IsNil() {
+			typ := reflect.TypeOf(object).Elem()
+			rv = reflect.New(typ)
+		}
+		if rv.Elem().Kind() == reflect.Ptr {
+			rv = rv.Elem()
+		}
+	case reflect.Struct:
 		typ := reflect.TypeOf(object)
 		rv = reflect.New(typ)
-	} else if rv.Elem().Kind() == reflect.Ptr {
-		rv = rv.Elem()
+	default:
+		err = errors.New("格式只支持结构体和结构体指针")
 	}
-	return rv
+
+	return
 }
 
 // SheetName 输入一个对象object判断是否实现了 ISheetName 接口，如果实现了获取结果
 func SheetName(object any) (name string, err error) {
-	rv := newObject(object)
-	method := rv.MethodByName("SheetName")
-	if method.IsValid() {
+	var rv reflect.Value
+
+	if rv, err = newObject(object); err != nil {
+		err = errors.Join(err, errors.New("获取 SheetName 名称失败"))
+		return
+	}
+
+	if method := rv.MethodByName("SheetName"); method.IsValid() {
 		name = method.Call(nil)[0].String()
 	}
 	return
@@ -33,7 +45,10 @@ func SheetName(object any) (name string, err error) {
 
 // ConvertToStructs 将二维字符串切片转换为指定结构体类型的切片
 func ConvertToStructs[T any](data [][]string) (t []T, err error) {
-	var item T
+	var (
+		item T
+		val  reflect.Value
+	)
 
 	if len(data) < 2 {
 		err = fmt.Errorf("数据至少需要包含表头和一行数据")
@@ -54,7 +69,12 @@ func ConvertToStructs[T any](data [][]string) (t []T, err error) {
 	t = make([]T, 0, len(rows))
 
 	// 初始化泛型对象并获取类型
-	val := newObject(item).Elem()
+	if val, err = newObject(item); err != nil {
+		err = errors.Join(err, errors.New("传入的泛型类型不是结构体或结构体指针"))
+		return
+	}
+
+	val = val.Elem()
 	typ := val.Type()
 
 	// 判断泛型传入的是指针吗？
@@ -62,11 +82,6 @@ func ConvertToStructs[T any](data [][]string) (t []T, err error) {
 
 	// 遍历每一行数据
 	for idx, row := range rows {
-		if len(row) != len(headers) {
-			err = fmt.Errorf("第%d行数据列数与表头不匹配", idx+1)
-			return
-		}
-
 		if val = reflect.New(typ); ptr {
 			item = val.Interface().(T)
 		}
@@ -80,7 +95,13 @@ func ConvertToStructs[T any](data [][]string) (t []T, err error) {
 			tag := field.Tag.Get("excel")
 
 			if pos, ok := header2idx[tag]; ok {
-				if err = setFieldValue(val.Field(j), row[pos]); err != nil {
+				// [fix] 修复当数据缺失的情况
+				value := NA
+				if pos < len(row) {
+					value = Value(row[pos])
+				}
+
+				if err = setFieldValue(val.Field(j), value); err != nil {
 					err = fmt.Errorf("第%d行第%d列赋值错误: %v", idx+1, pos+1, err)
 					return
 				}
@@ -97,7 +118,7 @@ func ConvertToStructs[T any](data [][]string) (t []T, err error) {
 }
 
 // setFieldValue 根据字段类型设置对应的值
-func setFieldValue(field reflect.Value, value string) (err error) {
+func setFieldValue(field reflect.Value, value Value) (err error) {
 	if !field.CanSet() {
 		err = fmt.Errorf("字段不可设置")
 		return
@@ -105,29 +126,29 @@ func setFieldValue(field reflect.Value, value string) (err error) {
 
 	switch field.Kind() {
 	case reflect.String:
-		field.SetString(value)
+		field.SetString(value.String())
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		var val int64
-		if val, err = strconv.ParseInt(value, 10, 64); err != nil {
+		if val, err = value.Int64(); err != nil {
 			return
 		}
 		field.SetInt(val)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		var val uint64
-		if val, err = strconv.ParseUint(value, 10, 64); err != nil {
+		if val, err = value.Uint64(); err != nil {
 			return
 		}
 		field.SetUint(val)
 	case reflect.Float32, reflect.Float64:
 		var val float64
 
-		if val, err = strconv.ParseFloat(value, 64); err != nil {
+		if val, err = value.Float64(); err != nil {
 			return
 		}
 		field.SetFloat(val)
 	case reflect.Bool:
 		var val bool
-		if val, err = strconv.ParseBool(value); err != nil {
+		if val, err = value.Bool(); err != nil {
 			return
 		}
 		field.SetBool(val)
