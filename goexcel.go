@@ -60,7 +60,7 @@ func Save[T any](filepath string, data []T) (err error) {
 
 	xlsx := excelize.NewFile()
 
-	defer xlsx.Close()
+	defer internal.CollectError(xlsx.Close, &err)
 
 	rv := reflect.ValueOf(data)
 

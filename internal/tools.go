@@ -158,3 +158,23 @@ func setFieldValue(field reflect.Value, value Value) (err error) {
 
 	return
 }
+
+// CollectError 聚合异常 返回 defer 关闭的异常信息
+func CollectError(f func() error, dst *error) {
+	if f == nil {
+		return
+	}
+
+	err := f()
+
+	if err == nil {
+		return
+	}
+
+	if *dst == nil {
+		*dst = err
+		return
+	}
+
+	*dst = errors.Join(*dst, err)
+}

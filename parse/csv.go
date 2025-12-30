@@ -3,6 +3,8 @@ package parse
 import (
 	"encoding/csv"
 	"os"
+
+	"github.com/gounits/goexcel/internal"
 )
 
 type CSV struct {
@@ -16,7 +18,7 @@ func (c CSV) Load(path string) (rows [][]string, err error) {
 		return
 	}
 
-	defer file.Close()
+	defer internal.CollectError(file.Close, &err)
 
 	reader := csv.NewReader(file)
 	if c.Comment > 0 {

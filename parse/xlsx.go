@@ -4,6 +4,7 @@
 package parse
 
 import (
+	"github.com/gounits/goexcel/internal"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -22,7 +23,7 @@ func (x XLSX) Load(path string) (rows [][]string, err error) {
 		return
 	}
 
-	defer file.Close()
+	defer internal.CollectError(file.Close, &err)
 
 	if sheet == "" {
 		sheet = file.GetSheetName(x.Index)

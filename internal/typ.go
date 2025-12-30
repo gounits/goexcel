@@ -13,7 +13,7 @@ const (
 	NAN  Value = "NaN"  // 非数字
 	INF  Value = "inf"  // 无穷大
 	_INF Value = "-inf" // 负无穷大
-	NA   Value = "na"   // 缺失值
+	NA   Value = ""     // 缺失值
 )
 
 func (v Value) String() string {
